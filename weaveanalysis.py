@@ -111,6 +111,7 @@ if __name__ == "__main__":
     from astropy.io import fits
     import matplotlib.pyplot as plt
     import numpy as np
+    from astropy.wcs import WCS
     
     filered = "WEAVE/stackcube_3120047.fit"
     fileblue ="WEAVE/stackcube_3120048.fit"
@@ -119,13 +120,22 @@ if __name__ == "__main__":
     rdata = red[1].data
     rflux = red[6].data
     rerr = red[2].data
+    rwcs = WCS(red[1].header)
+    rsens = red[5].data
     
+    Rwav = range(rwcs.spectral.array_shape[0])
+    Rwav = rwcs.spectral.pixel_to_world(Rwav).value
     red.close()
     
     blue = fits.open(fileblue)
     bdata = blue[1].data
     bflux = blue[6].data
     berr = blue[2].data
+    bsens = blue[5].data
+    
+    bwcs = WCS(blue[1].header)
+    Bwav = range(bwcs.spectral.array_shape[0])
+    Bwav = bwcs.spectral.pixel_to_world(Bwav).value
     
     blue.close()
     
@@ -156,50 +166,63 @@ if __name__ == "__main__":
     red_spectra = avg_spectra(rdata, segmap)
     blue_spectra = avg_spectra(bdata, segmap)
 
-    red_err = avg_spectra(rerr, segmap, do_sum = False)
-    blue_err = avg_spectra(berr, segmap, do_sum = False)
-    #%%
+    red_err = avg_spectra(1/np.sqrt(rerr), segmap, do_sum = False)
+    blue_err = avg_spectra(1/np.sqrt(berr), segmap, do_sum = False)
+    
     red_correction = np.ones(11)
-    for i in range(1,10):
-        med = np.nanmedian((red_spectra[i][1:]-red_spectra[i][:-1])**2)
+    for i in range(1,11):
+        med = np.sqrt(np.nanmedian(0.5*(red_spectra[i][1:]-red_spectra[i][:-1])**2))
         mu = np.nanmedian(red_err[i])
         red_correction[i] = med/mu
-        print(f'For mask {i}, med = {med}, mu = {mu}, corr = {red_correction[i]}')
     
     blue_correction = np.ones(11)
-    for i in range(1,10):
-        med = np.nanmedian((blue_spectra[i][1:]-blue_spectra[i][:-1])**2)
+    for i in range(1,11):
+        med = np.sqrt(0.5*np.nanmedian((blue_spectra[i][1:]-blue_spectra[i][:-1])**2))
         mu = np.nanmedian(blue_err[i])
         blue_correction[i] = med/mu
-        print(f'For mask {i}, med = {med}, mu = {mu}, corr = {blue_correction[i]}')
     
-    Rrange = (5790, 9590)
-    Brange = (3660, 6060)
+    # Applying the sensitivity function:
+    for i in range(1,11):
+        red_spectra[i] = rsens*red_spectra[i]
+        red_err[i] = rsens*red_err[i]
+        
+        blue_spectra[i] = bsens*blue_spectra[i]
+        blue_err[i] = bsens*blue_err[i]
+        
+    # plt.figure(1)
+    # flux_show(cflux)
     
-    Rwav = np.arange(Rrange[0], Rrange[1], (Rrange[1] - Rrange[0]) / len(rdata))
-    Bwav = np.arange(Brange[0], Brange[1], (Brange[1] - Brange[0]) / len(bdata))
-    
-    plt.figure(1)
-    flux_show(cflux)
-    
-    mask_plot = True
-    plt.figure(2)
-    if mask_plot:
-        plt.imshow(np.transpose(segmap), origin='lower', cmap='tab10')
-        plt.show()
+    # mask_plot = True
+    # plt.figure(2)
+    # if mask_plot:
+    #     plt.imshow(np.transpose(segmap), origin='lower')
+    #     plt.show()
             
-    mask2plot = 2
-    plt.figure(3)
-    plt.plot(Rwav, red_spectra[mask2plot],'k')
-    plt.plot(Rwav, red_spectra[mask2plot]+red_err[mask2plot]*red_correction[mask2plot],'k--', alpha = 0.3)
-    plt.plot(Rwav, red_spectra[mask2plot]-red_err[mask2plot]*red_correction[mask2plot],'k--', alpha = 0.3)
-    plt.plot(Bwav, blue_spectra[mask2plot],'k')
-    plt.plot(Bwav, blue_spectra[mask2plot]+blue_err[mask2plot]*blue_correction[mask2plot],'k--', alpha = 0.3)
-    plt.plot(Bwav, blue_spectra[mask2plot]-blue_err[mask2plot]*blue_correction[mask2plot],'k--', alpha = 0.3)
-    plt.xlabel('Wavelength (Armstrong)')
-    plt.ylabel('Intensity (au)')
-    plt.grid(True)
-    plt.title(f'Spectra of mask {mask2plot}')
-    
-    
-    
+    # mask = 1
+    # fig, ax = plt.subplots()
+    # ax.plot(Rwav*1e10, red_spectra[mask],'r')
+    # ax.fill_between(Rwav*1e10, red_spectra[mask]-red_err[mask], red_spectra[mask]+red_err[mask], color ='red', alpha = 0.3)
+    # ax.plot(Bwav*1e10, blue_spectra[mask],'b')
+    # ax.fill_between(Bwav*1e10, blue_spectra[mask]-blue_err[mask], blue_spectra[mask]+blue_err[mask], color = 'blue', alpha = 0.3)
+    # plt.xlabel('Wavelength (Armstrong)')
+    # plt.ylabel('Intensity (erg/s cm^2)')
+    # plt.grid(True)
+    # plt.title(f'Spectra of mask {mask}')
+
+    for i in range(1,11):
+        with open(f'red_galaxy_mask_{i}.txt', 'w') as f:
+            for j in range(len(Rwav)):
+                if red_spectra[i][j] == 0.0:
+                    weight = 0.0
+                else:
+                    weight = 1.0
+                f.write(f'{Rwav[j]} {red_spectra[i][j]} {red_err[i][j]} {weight}\n')
+                
+    for i in range(1,11):
+        with open(f'blue_galaxy_mask_{i}.txt', 'w') as f:
+            for j in range(len(Bwav)):
+                if blue_spectra[i][j] == 0.0:
+                    weight = 0.0
+                else:
+                    weight = 1.0
+                f.write(f'{Bwav[j]} {blue_spectra[i][j]} {blue_err[i][j]} {weight}\n')
