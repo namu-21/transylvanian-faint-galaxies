@@ -189,40 +189,45 @@ if __name__ == "__main__":
         blue_spectra[i] = bsens*blue_spectra[i]
         blue_err[i] = bsens*blue_err[i]
         
-    # plt.figure(1)
-    # flux_show(cflux)
+    plt.figure(1)
+    flux_show(cflux)
     
-    # mask_plot = True
-    # plt.figure(2)
-    # if mask_plot:
-    #     plt.imshow(np.transpose(segmap), origin='lower')
-    #     plt.show()
+    mask_plot = True
+    plt.figure(2)
+    if mask_plot:
+        plt.imshow(np.transpose(segmap), origin='lower')
+        plt.show()
             
-    # mask = 1
-    # fig, ax = plt.subplots()
-    # ax.plot(Rwav*1e10, red_spectra[mask],'r')
-    # ax.fill_between(Rwav*1e10, red_spectra[mask]-red_err[mask], red_spectra[mask]+red_err[mask], color ='red', alpha = 0.3)
-    # ax.plot(Bwav*1e10, blue_spectra[mask],'b')
-    # ax.fill_between(Bwav*1e10, blue_spectra[mask]-blue_err[mask], blue_spectra[mask]+blue_err[mask], color = 'blue', alpha = 0.3)
-    # plt.xlabel('Wavelength (Armstrong)')
-    # plt.ylabel('Intensity (erg/s cm^2)')
-    # plt.grid(True)
-    # plt.title(f'Spectra of mask {mask}')
+    mask = 1
+    fig, ax = plt.subplots()
+    ax.plot(Rwav*1e10, red_spectra[mask],'r')
+    ax.fill_between(Rwav*1e10, red_spectra[mask]-red_err[mask], red_spectra[mask]+red_err[mask], color ='red', alpha = 0.3)
+    ax.plot(Bwav*1e10, blue_spectra[mask],'b')
+    ax.fill_between(Bwav*1e10, blue_spectra[mask]-blue_err[mask], blue_spectra[mask]+blue_err[mask], color = 'blue', alpha = 0.3)
+    plt.xlabel('Wavelength (Armstrong)')
+    plt.ylabel('Intensity (erg/s cm^2)')
+    plt.grid(True)
+    plt.title(f'Spectra of mask {mask}')
 
     for i in range(1,11):
         with open(f'red_galaxy_mask_{i}.txt', 'w') as f:
-            for j in range(len(Rwav)):
-                if red_spectra[i][j] == 0.0:
-                    weight = 0.0
-                else:
-                    weight = 1.0
-                f.write(f'{Rwav[j]} {red_spectra[i][j]} {red_err[i][j]} {weight}\n')
+            with open(f'red_weights_mask_{i}.txt', 'w') as w:
+                for j in range(len(Rwav)):
+                    if red_spectra[i][j] == 0.0:
+                        weight = 0.0
+                    else:
+                        weight = 1.0
+                    f.write(f'{Rwav[j]} {red_spectra[i][j]} {red_err[i][j]}\n')
+                    w.write(f'{weight}\n')
                 
     for i in range(1,11):
         with open(f'blue_galaxy_mask_{i}.txt', 'w') as f:
-            for j in range(len(Bwav)):
-                if blue_spectra[i][j] == 0.0:
-                    weight = 0.0
-                else:
-                    weight = 1.0
-                f.write(f'{Bwav[j]} {blue_spectra[i][j]} {blue_err[i][j]} {weight}\n')
+            with open(f'blue_weights_mask_{i}.txt', 'w') as w:
+                for j in range(len(Bwav)):
+                    if blue_spectra[i][j] == 0.0:
+                        weight = 0.0
+                    else:
+                        weight = 1.0
+                    f.write(f'{Bwav[j]} {blue_spectra[i][j]} {blue_err[i][j]}\n')
+                    w.write(f'{weight}\n')
+            
