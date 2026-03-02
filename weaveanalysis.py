@@ -1,30 +1,30 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Dec 8 17:00:25 2025
 
 @author: javfd
 
-Next steps:
-    x, y coordinates are not correctly treated, they are reversed, fix that.
-    add quality control with a plot for every mask with weigths and errors.
-    """
+"""
 
+halpha = 6562.8
+def redshift(line):
+    return (line-halpha)/halpha
 
 def flux_show(flux):
     from astropy.visualization import simple_norm
     import matplotlib.pyplot as plt
 
-    inv_flux = np.transpose(flux)
+    plt.imshow(flux, cmap = 'Spectral', norm=simple_norm(flux, 'log'), origin='lower', aspect='equal')
 
-    plt.imshow(inv_flux, cmap = 'Spectral', norm=simple_norm(inv_flux, 'log'), origin='lower', aspect='equal')
-
-def bocao(arr, x1, y1, x2, y2):
+def bocao(arr, p1, p2):
+    '''
+    p1 = (y1,x1) tuple del punto inferior izquierdo del paralelogramo que se quiere borrar
+    p2 = (y2,x2) tuple del punto superior derecho del paralelogramo que se quiere borrar
+    '''
     out = arr.copy()
 
-    xmin, xmax = sorted([x1, x2])
-    ymin, ymax = sorted([y1, y2])
-
-    out[ymin:ymax+1, xmin:xmax+1] = 0
+    out[p1[1]:p2[1]+1, p1[0]:p2[0]+1] = 0
 
     return out
 
@@ -69,8 +69,8 @@ if __name__ == "__main__":
 
     # Loading the data from fits file
 
-    filered = "WEAVE/stackcube_3120047.fit"
-    fileblue ="WEAVE/stackcube_3120048.fit"
+    filered = "stackcube_3132971.fit"
+    fileblue ="stackcube_3132972.fit"
 
     # Red part of the spectrum
 
@@ -102,25 +102,35 @@ if __name__ == "__main__":
     # Adding flux regions for total flux (slight overlap)
     flux = rflux + bflux
 
+    #%%
+
     #Star flux cleaning
 
-    cflux = bocao(flux, 27, 35, 60, 15)
-    cflux = bocao(cflux, 54, 173, 64, 165)
-    cflux = bocao(cflux, 152, 127, 163, 117)
+    cflux = bocao(flux, (56,128), (70,139))
+    cflux = bocao(cflux, (152,90), (162,110))
+    cflux = bocao(cflux, (140,32), (154,39))
+    cflux = bocao(cflux, (1,36), (26,57))
+    cflux = bocao(cflux, (68,8), (77,16))
+    cflux = bocao(cflux, (90,131), (109,142))
+    cflux = bocao(cflux, (152,53), (160,56))
 
+
+    flux_show(cflux)
+
+    #%%
     #Brightness regions selection (made by eye)
 
     bright_tuples =[
-        (9e6, 1e9),
-        (6.1e6,9e6),
-        (5e6, 6.1e6),
-        (4e6, 5e6),
-        (3e6, 4e6),
-        (2e6, 3e6),
-        (1e6,2e6),
-        (5e5, 1e6),
-        (2e5, 5e5),
-        (1e5,2e5)
+        (6.4e6, 1e9),
+        (1.65e6,6.4e6),
+        (1.19e6, 1.65e6),
+        (9.5e5, 1.19e6),
+        (8.0e5, 9.5e5),
+        (6.9e5, 8.0e5),
+        (4.1e5,6.9e5),
+        (2.35e5, 4.1e5),
+        (1.34e5, 2.35e5),
+        (7e4,1.34e5)
         ]
 
     segmap = segmentation_map(cflux, bright_tuples)
@@ -165,8 +175,12 @@ if __name__ == "__main__":
     mask_plot = True
     if mask_plot:
         plt.figure(2)
-        plt.imshow(np.transpose(segmap), origin='lower')
+        plt.imshow(segmap, origin='lower')
         plt.show()
+
+    save_segmap = False
+    if save_segmap:
+        np.savez('map_cubei.npz', segmap)
 
     # Plot of selected mask spectrum
     mask = 1
@@ -181,6 +195,9 @@ if __name__ == "__main__":
         plt.grid(True)
         plt.title(f'Spectra of mask {mask}')
 
+    def write_redshift(line):
+        with open('redshift.txt', 'w') as f:
+            f.write(f'{redshift(line)}')
     # Function for exporting results into text files
     def write_results():
         for i in range(1,11):
