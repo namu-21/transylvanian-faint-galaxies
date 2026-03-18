@@ -5,10 +5,11 @@ Created on Sun Feb 22 18:43:38 2026
 
 @author: javfdez
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import matplotlib.pyplot as plt
 import numpy as np
-from astropy import units as u
+
+arcsec = np.pi/(180*3600)
 
 @dataclass
 class Ring:
@@ -87,7 +88,7 @@ class Galaxy:
         cmap = 'Spectral'
         vmin = -11
         vmax = -9
-        fiberarea = 2*np.log10(np.pi*(1.3*np.sin(1*u.arcsec)*self.angular_distance))
+        fiberarea = 2*np.log10(np.pi*(1.3*np.sin(1*arcsec)*self.angular_distance))
         masses = ax[0].imshow(massmap-fiberarea, cmap='magma')
         ssfr8 = ax[1].imshow(ssfr8_map, cmap=cmap, vmin = vmin, vmax = vmax)
         ssfr9 = ax[2].imshow(ssfr9_map, cmap=cmap, vmin = vmin, vmax = vmax)
