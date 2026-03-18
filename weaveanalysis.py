@@ -69,8 +69,8 @@ if __name__ == "__main__":
 
     # Loading the data from fits file
 
-    filered = "stackcube_3132971.fit"
-    fileblue ="stackcube_3132972.fit"
+    filered = "stackcube_3132985.fit"
+    fileblue ="stackcube_3132986.fit"
 
     # Red part of the spectrum
 
@@ -106,14 +106,14 @@ if __name__ == "__main__":
 
     #Star flux cleaning
 
-    cflux = bocao(flux, (56,128), (70,139))
-    cflux = bocao(cflux, (152,90), (162,110))
-    cflux = bocao(cflux, (140,32), (154,39))
-    cflux = bocao(cflux, (1,36), (26,57))
-    cflux = bocao(cflux, (68,8), (77,16))
-    cflux = bocao(cflux, (90,131), (109,142))
-    cflux = bocao(cflux, (152,53), (160,56))
-
+    cflux = bocao(flux, (30,103), (46,118))
+    cflux = bocao(cflux, (96,154), (103,162))
+    cflux = bocao(cflux, (9,43), (32,60))
+    cflux = bocao(cflux, (140,98), (154,111))
+    cflux = bocao(cflux, (42,35), (50,43))
+    cflux = bocao(cflux, (11,114), (15,118))
+    cflux = bocao(cflux, (102,21), (142,53))
+    cflux = bocao(cflux, (5,134), (16,145))
 
     flux_show(cflux)
 
@@ -121,16 +121,16 @@ if __name__ == "__main__":
     #Brightness regions selection (made by eye)
 
     bright_tuples =[
-        (6.4e6, 1e9),
-        (1.65e6,6.4e6),
-        (1.19e6, 1.65e6),
-        (9.5e5, 1.19e6),
-        (8.0e5, 9.5e5),
-        (6.9e5, 8.0e5),
-        (4.1e5,6.9e5),
-        (2.35e5, 4.1e5),
-        (1.34e5, 2.35e5),
-        (7e4,1.34e5)
+        (3.3e6, 1e9),
+        (2.19e6,3.3e6),
+        (1.61e6, 2.19e6),
+        (1.20e6, 1.61e6),
+        (1.0e6, 1.20e6),
+        (7.9e5, 1.0e6),
+        (5.4e5, 7.9e5),
+        (4.2e5, 5.4e5),
+        (3.16e5, 4.2e5),
+        (2.39e5, 3.16e5)
         ]
 
     segmap = segmentation_map(cflux, bright_tuples)
